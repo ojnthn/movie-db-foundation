@@ -1,0 +1,47 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Docker: Subir containers",
+      "type": "shell",
+      "command": "docker compose -f docker/docker-compose.yml up -d",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: Logs da API",
+      "type": "shell",
+      "command": "docker compose -f docker/docker-compose.yml logs -f api",
+      "isBackground": true,
+      "dependsOn": ["Docker: Subir containers"],
+      "dependsOrder": "sequence",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+              "regexp": "^(NEVER_MATCH)\\s+(NEVER_MATCH)$",
+              "kind": "file",
+              "file": 1,
+              "message": 2
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".",
+            "endsPattern": "."
+          }
+        }
+      ]
+    }
+  ]
+}
