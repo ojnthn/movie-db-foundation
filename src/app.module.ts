@@ -1,10 +1,27 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import databaseConfig from './config/database.config';
+import jwtConfig from './config/jwt.config';
+import { GlobalExceptionFilter } from './shared/filters/global-exception.filter';
+import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
+import { AuthModule } from './modules/auth/auth.module';
+import { JwtAuthGuard } from './modules/auth/infrastructure/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [databaseConfig, jwtConfig],
+    }),
+    AuthModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
+  ],
 })
 export class AppModule {}
