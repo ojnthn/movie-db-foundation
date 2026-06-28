@@ -2,7 +2,9 @@ services:
   api:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.dev
+      dockerfile: docker/Dockerfile
+      target: dev
+    working_dir: /app
     ports:
       - "3000:3000"
       - "9229:9229"

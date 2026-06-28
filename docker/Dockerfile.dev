@@ -1,8 +1,0 @@
-FROM node:20-alpine
-WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
-COPY prisma ./prisma
-RUN npx prisma generate
-EXPOSE 3000 9229
-CMD ["node_modules/.bin/nest", "start", "--debug", "0.0.0.0:9229", "--watch"]
