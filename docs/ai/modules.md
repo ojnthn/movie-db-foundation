@@ -16,10 +16,10 @@ modules/{module-name}/
 ├── domain/
 │   ├── entities/           # entidades de domínio
 │   ├── repositories/       # interfaces de repositório + tokens
-│   └── value-objects/      # value objects com validação
+│   └── value-objects/      # value objects com validação (se houver)
 ├── application/
 │   ├── use-cases/          # um arquivo por use case
-│   └── dtos/               # DTOs de input/output
+│   └── dtos/               # DTOs de request HTTP (se houver — módulos sem HTTP input podem omitir)
 ├── infrastructure/
 │   ├── repositories/       # implementações (Prisma ou API externa)
 │   ├── guards/             # guards (se necessário)
@@ -79,7 +79,7 @@ Componentes em `src/shared/` **não recebem** `CONTEXT.md` nem `README.md`.
 - Escopo (dentro / fora)
 - Casos de Uso (tabela: use case, arquivo, rota)
 - Entidades de Domínio (campos e invariantes)
-- Value Objects (campo e validações)
+- Value Objects (campo e validações — se não houver, declarar explicitamente "Não se aplica")
 - Interface do Repositório
 - Contrato da API (request/response por endpoint)
 - Erros Esperados (exceção, código HTTP, quando ocorre)

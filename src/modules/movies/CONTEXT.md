@@ -43,7 +43,13 @@ Expor filmes populares em cartaz, consumindo dados da API TMDB e resolvendo gên
 | `overview` | `string` | Sinopse |
 | `genresNames` | `string[]` | Nomes dos gêneros (resolvidos a partir dos IDs TMDB) |
 
-> Entidade anêmica — apenas estrutura de dados, sem invariantes de negócio. Gêneros já chegam resolvidos do repositório.
+> Entidade anêmica — constructor público, sem factory method nem `Result<T>`. Não há invariantes de negócio a proteger. Gêneros já chegam resolvidos do repositório via `new Movie(...)` no `TmdbMoviesRepository`.
+
+---
+
+## Value Objects
+
+Não se aplica — `Movie` é uma entidade anêmica sem campos com validação própria. Gêneros chegam já resolvidos como `string[]` do repositório.
 
 ---
 
@@ -51,6 +57,8 @@ Expor filmes populares em cartaz, consumindo dados da API TMDB e resolvendo gên
 
 ```typescript
 // domain/repositories/movies.repository.interface.ts
+
+export const MOVIES_REPOSITORY = 'MOVIES_REPOSITORY';
 
 export interface GetPopularMoviesOptions {
   page?: number;
@@ -67,7 +75,7 @@ export abstract class MoviesRepository {
 }
 ```
 
-> `MoviesRepository` é uma `abstract class` (não `interface`) para permitir uso como token DI no NestJS sem precisar de string token separado.
+> `MoviesRepository` é uma `abstract class` (não `interface`) para permitir uso como token DI no NestJS sem precisar de string token separado. O `movies.module.ts` usa a classe diretamente como token (`provide: MoviesRepository`) — `MOVIES_REPOSITORY` está exportado mas não é utilizado no registro atual.
 
 ---
 
@@ -128,12 +136,17 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 2. Chama GetPopularMoviesUseCase.execute({ page })
 3. UseCase chama moviesRepository.getPopular({ page })
 4. TmdbMoviesRepository executa em paralelo (Promise.all):
-   a. GET /genre/movie/list?language=en-US  → mapa de id → nome de gênero
-   b. GET /discover/movie?sort_by=popularity.desc&with_release_type=2|3&release_date.gte=<6 meses atrás>
-5. Resolve genre_ids de cada filme para nomes via genreMap
-6. Mapeia TmdbMovie[] → Movie[]
+   a. GET /genre/movie/list
+      params: language=en-US
+      → mapa de id → nome de gênero
+   b. GET /discover/movie
+      params: include_adult=false, include_video=false, language=en-US,
+              page, sort_by=popularity.desc, with_release_type=2|3,
+              release_date.gte=<6 meses atrás>, release_date.lte=<hoje>
+5. Resolve genre_ids de cada filme para nomes via genreMap (IDs sem mapeamento filtrados)
+6. Mapeia TmdbMovie[] → Movie[] via new Movie(id, backdrop_path, title, overview, genresNames)
 7. Calcula nextPage: page < total_pages ? page + 1 : null
-8. UseCase mapeia PopularMoviesResult → GetPopularMoviesOutput (snake_case para response)
+8. UseCase mapeia PopularMoviesResult → GetPopularMoviesOutput (camelCase → snake_case para response)
 9. Controller retorna HTTP 200
 ```
 
@@ -178,6 +191,16 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 
 ---
 
+## Dependências Proibidas
+
+| Camada | Proibido |
+|---|---|
+| `domain` | `@nestjs/*`, Prisma, `class-validator`, qualquer lib de terceiros |
+| `application` | Acesso direto a `RestClient` ou qualquer infraestrutura |
+| `presentation` | `MoviesRepository` diretamente; lógica de negócio |
+
+---
+
 ## Variáveis de Ambiente
 
 | Variável | Descrição | Obrigatória |
@@ -192,10 +215,11 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 
 ## Convenções
 
-| Artefato | Arquivo | Classe |
+| Artefato | Arquivo | Classe / Constante |
 |---|---|---|
 | Entidade | `domain/entities/movie.entity.ts` | `Movie` |
-| Interface repositório | `domain/repositories/movies.repository.interface.ts` | `MoviesRepository` |
+| Repositório abstrato | `domain/repositories/movies.repository.interface.ts` | `MoviesRepository` |
+| Token DI (exportado, não usado) | `domain/repositories/movies.repository.interface.ts` | `MOVIES_REPOSITORY` |
 | Use case | `application/use-cases/get-popular-movies.use-case.ts` | `GetPopularMoviesUseCase` |
 | Repositório TMDB | `infrastructure/repositories/tmdb-movies.repository.ts` | `TmdbMoviesRepository` |
 | Controller | `presentation/controllers/movies.controller.ts` | `MoviesController` |

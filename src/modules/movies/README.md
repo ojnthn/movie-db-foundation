@@ -1,21 +1,120 @@
-# Movies Module
+# Movies
 
-Exposes movie data sourced from the TMDB (The Movie Database) API.
+## Objetivo
 
-## Endpoint
+Expor filmes populares em cartaz via TMDB API, com resolução de gêneros e paginação.
 
-### `GET /movies`
+---
 
-Lists currently popular movies in theaters. Requires JWT authentication.
+## Responsabilidades
 
-**Query Params**
+- Listar filmes populares com paginação, filtrados para lançamentos teatrais dos últimos 6 meses
+- Resolver IDs de gênero TMDB para nomes legíveis
 
-| Param | Type   | Default | Description      |
-|-------|--------|---------|------------------|
-| page  | number | 1       | Page number      |
+> Este módulo não armazena dados em banco. Toda a informação vem da TMDB em tempo real.
 
-**Response**
+---
 
+## Casos de Uso
+
+| Use Case | Descrição | Rota HTTP |
+|---|---|---|
+| `GetPopularMoviesUseCase` | Lista filmes populares com paginação | `GET /movies` |
+
+---
+
+## Fluxo
+
+```
+GET /movies?page=1
+    → MoviesController.getPopular()
+    → GetPopularMoviesUseCase.execute({ page })
+    → MoviesRepository.getPopular({ page })
+    → TmdbMoviesRepository:
+        Promise.all([
+          GET /genre/movie/list          → genreMap (id → nome)
+          GET /discover/movie            → TmdbMovie[]
+        ])
+    → Resolve genre_ids → nomes via genreMap
+    → Mapeia TmdbMovie[] → Movie[]
+    → Calcula nextPage
+    → { pagination, details }  HTTP 200
+```
+
+---
+
+## Estrutura Interna
+
+```
+modules/movies/
+├── CONTEXT.md
+├── README.md
+├── domain/
+│   ├── entities/
+│   │   └── movie.entity.ts               # Movie — entidade anêmica (constructor público)
+│   └── repositories/
+│       └── movies.repository.interface.ts # MoviesRepository (abstract class) + interfaces
+├── application/
+│   └── use-cases/
+│       └── get-popular-movies.use-case.ts # GetPopularMoviesUseCase + input/output types
+├── infrastructure/
+│   └── repositories/
+│       └── tmdb-movies.repository.ts      # TmdbMoviesRepository — consome TMDB via RestClient
+├── presentation/
+│   └── controllers/
+│       └── movies.controller.ts           # MoviesController — GET /movies
+└── movies.module.ts
+```
+
+---
+
+## Dependências
+
+### Módulos NestJS
+
+| Módulo | Finalidade |
+|---|---|
+| `HttpModule` (shared) | Acesso ao `RestClient` para chamadas à TMDB |
+
+### Variáveis de Ambiente
+
+| Variável | Obrigatória | Descrição |
+|---|---|---|
+| `TMDB_BASE_URL` | Sim | Base URL da TMDB: `https://api.themoviedb.org/3` |
+| `TMDB_API_KEY` | Sim | Bearer access token da TMDB |
+| `API_TIMEOUT` | Não | Timeout HTTP em ms (padrão: 5000) |
+
+> Variáveis consumidas pelo `HttpModule` de `shared/http`, não diretamente por este módulo.
+
+---
+
+## Como Utilizar
+
+### Registrar no AppModule
+
+```typescript
+import { MoviesModule } from './modules/movies/movies.module';
+
+@Module({
+  imports: [MoviesModule],
+})
+export class AppModule {}
+```
+
+### Listar filmes populares
+
+```http
+GET /movies?page=1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+---
+
+## Exemplos
+
+### Listagem com sucesso
+
+**Response (200):**
 ```json
 {
   "pagination": {
@@ -34,37 +133,49 @@ Lists currently popular movies in theaters. Requires JWT authentication.
 }
 ```
 
-`pagination.next` is `null` on the last page.
+> `pagination.next` é `null` na última página.
 
-## Architecture
+### Token ausente ou inválido
 
-```
-movies/
-├── domain/
-│   ├── entities/movie.entity.ts          — Movie domain entity
-│   └── repositories/
-│       └── movies.repository.interface.ts — Abstract repository contract
-├── application/
-│   └── use-cases/
-│       └── get-popular-movies.use-case.ts — Orchestrates fetch + mapping
-├── infrastructure/
-│   └── repositories/
-│       └── tmdb-movies.repository.ts      — TMDB API implementation
-└── presentation/
-    └── controllers/
-        └── movies.controller.ts           — HTTP layer
+**Response (401):**
+```json
+{
+  "statusCode": 401,
+  "message": "Unauthorized"
+}
 ```
 
-## Environment Variables
+---
 
-| Variable     | Description                                        |
-|--------------|----------------------------------------------------|
-| TMDB_BASE_URL | TMDB base URL: `https://api.themoviedb.org/3`      |
-| TMDB_API_KEY      | TMDB Bearer access token                           |
-| API_TIMEOUT  | HTTP timeout in ms (optional, default 5000)        |
+## Erros Comuns
 
-## Notes
+| Código | Causa |
+|---|---|
+| `401` | Token JWT ausente ou inválido — tratado pelo `JwtAuthGuard` global |
 
-- Genre IDs from TMDB are resolved to names via `/genre/movie/list` (fetched in parallel with movie list).
-- Date range defaults to 6 months ago → today, filtering to theatrical releases (`with_release_type=2|3`).
-- JWT guard is applied globally; no `@Public()` decorator needed here.
+---
+
+## Como Testar
+
+```bash
+# Unit tests (não existem ainda — candidatos: GetPopularMoviesUseCase com MoviesRepository mockado)
+npm run test -- --testPathPattern=movies
+
+# E2E tests
+npm run test:e2e -- --testPathPattern=movies
+
+# Curl — listar filmes (substituir <token> pelo JWT obtido em POST /auth)
+curl -X GET "http://localhost:3000/movies?page=1" \
+  -H "Authorization: Bearer <token>"
+```
+
+---
+
+## Observações
+
+- Chamadas à TMDB são paralelas (`Promise.all`) — gêneros e filmes buscados simultaneamente para minimizar latência.
+- Filtro de data calculado em runtime: `release_date.gte = 6 meses atrás`, `release_date.lte = hoje`.
+- Somente lançamentos teatrais (`with_release_type=2|3`) são retornados.
+- IDs de gênero sem mapeamento na lista de gêneros são descartados (filtrados com `.filter(Boolean)`).
+- `JwtAuthGuard` é global — nenhuma rota deste módulo usa `@Public()`.
+- Swagger disponível em `GET /docs` (ambiente de desenvolvimento).
