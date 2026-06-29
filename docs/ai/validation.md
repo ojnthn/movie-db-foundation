@@ -1,43 +1,33 @@
 # Validação
 
-## Objetivo
+## Camadas de Validação
 
-Documentar como a validação de dados de entrada é feita no projeto.
-
----
-
-## Camadas de validação
-
-O projeto usa **duas camadas de validação independentes**:
+Duas camadas de validação independentes:
 
 | Camada | Onde | Mecanismo |
 |---|---|---|
 | HTTP (apresentação) | DTOs | `class-validator` + `ValidationPipe` |
 | Domínio | Value objects e entidades | `Result<T>` com `fail()` |
 
----
-
-## ValidationPipe (global)
+## ValidationPipe (Global)
 
 Configurado em `main.ts` e aplicado a todas as rotas:
 
 ```typescript
 app.useGlobalPipes(
   new ValidationPipe({
-    whitelist: true,           // remove campos não declarados no DTO
-    forbidNonWhitelisted: true, // retorna erro 400 se campo extra for enviado
-    transform: true,           // transforma o body para a classe do DTO
+    whitelist: true,              // remove campos não declarados no DTO
+    forbidNonWhitelisted: true,   // retorna erro 400 se campo extra for enviado
+    transform: true,              // transforma o body para a classe do DTO
   }),
 );
 ```
 
----
-
 ## DTOs
 
 - Localizados em `application/dtos/`
-- Anotados com decorators do `class-validator` e `@nestjs/swagger`
-- Propriedades com `!` (definite assignment assertion) — obrigatório para compatibilidade com class-validator
+- Anotados com decorators de `class-validator` e `@nestjs/swagger`
+- Propriedades com `!` (definite assignment) — obrigatório para compatibilidade com class-validator
 - Toda propriedade deve ter ao menos um decorator de validação e um `@ApiProperty`
 
 ### Decorators usados no projeto
@@ -71,9 +61,7 @@ export class RegisterDto {
 }
 ```
 
----
-
-## Validação de domínio (value objects)
+## Validação de Domínio (Value Objects)
 
 Value objects validam seus próprios invariantes retornando `Result<T>`:
 
@@ -89,11 +77,9 @@ static create(raw: string): Result<Email> {
 - Nunca lançam exceções — retornam `fail(mensagem)`
 - A entidade `User.create()` agrega os resultados dos value objects e propaga falhas
 
----
+## Resposta de Erro de Validação HTTP
 
-## Resposta de erro de validação HTTP
-
-Quando o `ValidationPipe` rejeita o body, retorna automaticamente:
+Quando o `ValidationPipe` rejeita o body:
 
 ```json
 {
@@ -103,12 +89,10 @@ Quando o `ValidationPipe` rejeita o body, retorna automaticamente:
 }
 ```
 
----
-
 ## Regras
 
 - DTOs não contêm lógica de negócio — apenas declaração de campos e decorators
 - Validação de formato (regex, tipo) fica no DTO
 - Validação de regra de negócio (unicidade, estado) fica no use case ou entidade
-- Nunca duplicar validação entre DTO e domínio para a mesma regra
-- A mensagem de erro deve ser em português e descrever claramente o problema
+- Nunca duplicar a mesma validação entre DTO e domínio
+- Mensagens de erro em português, claras e descritivas
