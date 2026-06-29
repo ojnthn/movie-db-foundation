@@ -6,6 +6,6 @@ buildArgs = { CACHE_BUST = "2" }
 
 [deploy]
 startCommand = "npx prisma migrate deploy && node dist/main"
-healthcheckPath = "/docs"
+healthcheckPath = "/health"
 healthcheckTimeout = 120
 restartPolicyType = "on_failure"
