@@ -9,7 +9,7 @@
 ## Regra de uso
 
 ```
-Antes de criar um componente:
+Antes de criar um componente de módulo:
 1. Identificar o tipo na tabela abaixo
 2. Localizar o template em .ai/templates/{tipo}/
 3. Gerar README.md a partir de README.template.md
@@ -35,12 +35,7 @@ Antes de criar um componente:
 | **Guard** | `src/modules/{nome}/infrastructure/guards/` | [`.ai/templates/guard/`](templates/guard/) |
 | **Strategy** | `src/modules/{nome}/infrastructure/strategies/` | [`.ai/templates/strategy/`](templates/strategy/) |
 | **Provider** | Declarado em `{nome}.module.ts` | [`.ai/templates/provider/`](templates/provider/) |
-| **Decorator** | `src/shared/decorators/` | [`.ai/templates/decorator/`](templates/decorator/) |
-| **Filter** | `src/shared/filters/` | [`.ai/templates/filter/`](templates/filter/) |
-| **Interceptor** | `src/shared/interceptors/` | [`.ai/templates/interceptor/`](templates/interceptor/) |
-| **Pipe** | `src/shared/pipes/` ou `src/modules/{nome}/application/pipes/` | [`.ai/templates/pipe/`](templates/pipe/) |
-| **Exception** | `src/shared/exceptions/` | [`.ai/templates/exception/`](templates/exception/) |
-| **Type** | `src/shared/types/` | [`.ai/templates/type/`](templates/type/) |
+| **Pipe** | `src/modules/{nome}/application/pipes/` | [`.ai/templates/pipe/`](templates/pipe/) |
 
 ---
 
@@ -105,14 +100,7 @@ presentation/
 
 ### Compartilhados (`src/shared/`)
 
-```
-decorators/          → Decorator
-exceptions/          → Exception
-filters/             → Filter
-interceptors/        → Interceptor
-pipes/               → Pipe
-types/               → Type
-```
+Componentes de `src/shared/` (decorators, exceptions, filters, interceptors, types) **não têm templates e não recebem CONTEXT.md/README.md**. O código é auto-explicativo.
 
 ### Configuração de módulo
 
@@ -146,9 +134,4 @@ types/               → Type
 | guard | 1.0 | {data} |
 | strategy | 1.0 | {data} |
 | provider | 1.0 | {data} |
-| decorator | 1.0 | {data} |
-| filter | 1.0 | {data} |
-| interceptor | 1.0 | {data} |
 | pipe | 1.0 | {data} |
-| exception | 1.0 | {data} |
-| type | 1.0 | {data} |

@@ -11,12 +11,10 @@ services:
     volumes:
       - ..:/app
       - /app/node_modules
+    env_file:
+      - ../.env
     environment:
       DATABASE_URL: "mysql://root:root@db:3306/moviedb"
-      JWT_SECRET: "${JWT_SECRET:-changeme}"
-      JWT_EXPIRATION: "${JWT_EXPIRATION:-30m}"
-      TMDB_API_KEY: "${TMDB_API_KEY}"
-      TMDB_BASE_URL: "${TMDB_BASE_URL:-https://api.themoviedb.org/3}"
       REDIS_URL: "redis://redis:6379"
     depends_on:
       db:

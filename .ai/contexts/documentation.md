@@ -42,10 +42,9 @@ Cada módulo em `src/modules/{name}/` deve conter **dois arquivos**:
 
 ## Arquivos de documentação em shared/
 
-Componentes de `src/shared/` que possuem comportamento não óbvio devem ter `CONTEXT.md` próprio:
+**Regra absoluta: componentes em `src/shared/` NÃO recebem `CONTEXT.md` nem `README.md`.**
 
-- `src/shared/interceptors/logging/CONTEXT.md` — documenta o `LoggingInterceptor`
-- `src/shared/Claude.md` — documenta todos os componentes de `shared/` em um único arquivo
+Arquivos de shared são curtos e auto-explicativos pelo próprio código. Não criar documentação adicional para decorators, exceptions, filters, interceptors, types ou qualquer outro componente dentro de `src/shared/`.
 
 ---
 

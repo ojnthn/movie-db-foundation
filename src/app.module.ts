@@ -6,6 +6,7 @@ import jwtConfig from './config/jwt.config';
 import { GlobalExceptionFilter } from './shared/filters/global-exception/global-exception.filter';
 import { LoggingInterceptor } from './shared/interceptors/logging/logging.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
+import { MoviesModule } from './modules/movies/movies.module';
 import { JwtAuthGuard } from './modules/auth/infrastructure/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 
@@ -16,6 +17,7 @@ import { AppController } from './app.controller';
       load: [databaseConfig, jwtConfig],
     }),
     AuthModule,
+    MoviesModule,
   ],
   controllers: [AppController],
   providers: [
