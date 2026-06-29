@@ -4,19 +4,21 @@
     {
       "type": "node",
       "request": "attach",
-      "name": "Desenvolvimento",
+      "name": "Docker: Debug",
       "port": 9229,
       "address": "localhost",
       "localRoot": "${workspaceFolder}",
       "remoteRoot": "/app",
       "sourceMaps": true,
-      "restart": false,
+      "restart": true,
+      "skipFiles": ["<node_internals>/**"],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "resolveSourceMapLocations": [
         "${workspaceFolder}/**",
         "!**/node_modules/**"
       ],
-      "preLaunchTask": "Docker: Logs da API"
+      "preLaunchTask": "docker: up & wait debug",
+      "postDebugTask": "docker: down"
     }
   ]
 }

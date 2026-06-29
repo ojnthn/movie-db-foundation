@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Docker: Subir containers",
+      "label": "docker: up",
       "type": "shell",
       "command": "docker compose -f docker/docker-compose.yml up -d",
       "presentation": {
@@ -13,35 +13,71 @@
       "problemMatcher": []
     },
     {
-      "label": "Docker: Logs da API",
+      "label": "docker: up --build",
       "type": "shell",
-      "command": "docker compose -f docker/docker-compose.yml logs -f api",
-      "isBackground": true,
-      "dependsOn": ["Docker: Subir containers"],
-      "dependsOrder": "sequence",
+      "command": "docker compose -f docker/docker-compose.yml up --build -d",
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
         "showReuseMessage": false,
         "clear": true
       },
-      "problemMatcher": [
-        {
-          "pattern": [
-            {
-              "regexp": "^(NEVER_MATCH)\\s+(NEVER_MATCH)$",
-              "kind": "file",
-              "file": 1,
-              "message": 2
-            }
-          ],
-          "background": {
-            "activeOnStart": true,
-            "beginsPattern": ".",
-            "endsPattern": "."
-          }
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: up & wait debug",
+      "type": "shell",
+      "command": "docker compose -f docker/docker-compose.yml up -d && until nc -z localhost 9229 2>/dev/null; do sleep 1; done",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: logs",
+      "type": "shell",
+      "command": "docker compose -f docker/docker-compose.yml logs -f api",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Application is running"
         }
-      ]
+      }
+    },
+    {
+      "label": "docker: restart api",
+      "type": "shell",
+      "command": "docker compose -f docker/docker-compose.yml restart api",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: down",
+      "type": "shell",
+      "command": "docker compose -f docker/docker-compose.yml down",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
     }
   ]
 }
