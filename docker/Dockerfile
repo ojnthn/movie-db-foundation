@@ -9,6 +9,7 @@ EXPOSE 3000 9229
 CMD ["sh", "-c", "npx prisma migrate deploy && node_modules/.bin/nest start --debug 0.0.0.0:9229 --watch"]
 
 FROM node:20-alpine AS builder
+ARG CACHE_BUST=1
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
