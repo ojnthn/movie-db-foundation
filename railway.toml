@@ -1,0 +1,10 @@
+[build]
+dockerfilePath = "docker/Dockerfile"
+dockerContext = "."
+dockerTarget = "production"
+
+[deploy]
+startCommand = "sh -c 'npx prisma migrate deploy && node dist/main'"
+healthcheckPath = "/docs"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
