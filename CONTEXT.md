@@ -58,6 +58,7 @@ src/
 ├── modules/
 │   ├── auth/
 │   │   ├── CONTEXT.md             # contexto do módulo (regras, use cases, fluxo)
+│   │   ├── README.md              # contexto do módulo regras, use cases, fluxo para um desenvolvedor humano
 │   │   ├── domain/
 │   │   │   ├── entities/          # user.entity.ts
 │   │   │   ├── repositories/      # user.repository.interface.ts
@@ -72,21 +73,40 @@ src/
 │   │   ├── presentation/
 │   │   │   └── controllers/       # auth.controller.ts
 │   │   └── auth.module.ts
-│   │
 │   └── movies/                    # (próximo módulo — v2)
-│       ├── CONTEXT.md
 │       └── ... mesma estrutura
 │
 ├── shared/
-│   ├── Claude.md                       # padrões compartilhados (Result<T>, exceções, decorators)
-│   ├── decorators/                     # current-user.decorator.ts, public.decorator.ts
-│   ├── exceptions/                     # domain.exception.ts (DomainException, UnauthorizedException, ConflictException, NotFoundException)
-│   ├── filters/                        # global-exception.filter.ts
+│   ├── CONTEXT.md                                  # Contexto, regras gerais de uma funcionalidade compartilhada
+│   ├── README.md                                   # Contexto, regras gerais de uma funcionalidade compartilhada para um desenvolvedor humano
+│   ├── decorators/                     
+│   │     ├─  current-user.decorator
+│   │     │     ├─ CONTEXT.md                   
+│   │     │     ├─ README.md                    
+│   │     │     └─ current-user.decorator.ts
+│   │     └─ ...
+│   ├── exceptions/                             
+│   │     ├─ CONTEXT.md                         
+│   │     ├─ README.md                          
+│   │     ├─ domain.exception.ts
+│   │     └─ ...
+│   ├── filters/                                
+│   │     ├─ global-exception
+│   │     │    ├─ CONTEXT.md                    
+│   │     │    ├─ README.md
+│   │     │    └─ global-exception.filter.ts
+│   │     └─ ... 
 │   ├── interceptors/
-│   │   └─ loggin
-│   │     ├─ CONTEXT.md                 # contexto do interceptor (regras e responsabilidades)
-│   │     └─ logging.interceptor.ts   
-│   └── types/                          # result.ts (Result<T>)
+│   │   ├─ loggin
+│   │   │   ├─ CONTEXT.md                       
+│   │   │   ├─ README.md                        
+│   │   │   └─ logging.interceptor.ts   
+│   │   └─ ...
+│   └── types/
+│       ├─ CONTEXT.md                       
+│       ├─ README.md                        
+│       ├─ result.ts
+│       └─ ...
 │
 └── config/
     ├── database.config.ts
@@ -280,6 +300,49 @@ Uma funcionalidade só é considerada **feita** quando todos os critérios abaix
 ### 7. Revisão
 - [ ] PR com descrição do que foi feito e como testar
 - [ ] Sem arquivos de debug, `console.log` ou código comentado
+
+---
+
+## Templates
+
+Os templates oficiais de documentação ficam em `.ai/templates/` e são **parte integrante da arquitetura do projeto**.
+
+### Regras obrigatórias
+
+- Todo componente novo deve ter `README.md` e `CONTEXT.md` gerados a partir do template oficial correspondente
+- É proibido criar `README.md` ou `CONTEXT.md` manualmente sem utilizar um template
+- A estrutura dos templates não pode ser modificada durante a geração de um componente
+- Alterações no padrão documental ocorrem primeiro no template, depois nos componentes existentes
+- Os templates representam o padrão oficial — qualquer divergência é erro no componente, não no template
+
+### Como identificar o template correto
+
+1. Consultar `.ai/template-registry.md` para localizar o template pelo tipo de componente
+2. Utilizar `README.template.md` para gerar o `README.md` do componente
+3. Utilizar `CONTEXT.template.md` para gerar o `CONTEXT.md` do componente
+4. Preencher apenas as informações específicas — nunca alterar a estrutura
+
+### Templates disponíveis
+
+| Tipo | Template |
+|---|---|
+| Module | `.ai/templates/module/` |
+| Controller | `.ai/templates/controller/` |
+| Use Case | `.ai/templates/use-case/` |
+| DTO | `.ai/templates/dto/` |
+| Entity | `.ai/templates/entity/` |
+| Value Object | `.ai/templates/value-object/` |
+| Repository | `.ai/templates/repository/` |
+| Service | `.ai/templates/service/` |
+| Guard | `.ai/templates/guard/` |
+| Strategy | `.ai/templates/strategy/` |
+| Provider | `.ai/templates/provider/` |
+| Decorator | `.ai/templates/decorator/` |
+| Filter | `.ai/templates/filter/` |
+| Interceptor | `.ai/templates/interceptor/` |
+| Pipe | `.ai/templates/pipe/` |
+| Exception | `.ai/templates/exception/` |
+| Type | `.ai/templates/type/` |
 
 ---
 

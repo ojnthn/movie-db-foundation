@@ -8,7 +8,7 @@ import { AuthDto } from '../../application/dtos/auth.dto';
 import { RegisterDto } from '../../application/dtos/register.dto';
 import { AuthUseCase } from '../../application/use-cases/auth.use-case';
 import { RegisterUseCase } from '../../application/use-cases/register.use-case';
-import { Public } from '../../../../shared/decorators/public.decorator';
+import { Public } from '../../../../shared/decorators/public.decorator/public.decorator';
 
 @ApiTags('auth')
 @Controller('auth')

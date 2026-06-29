@@ -12,7 +12,7 @@ import {
   DomainException,
   NotFoundException,
   UnauthorizedException,
-} from '../exceptions/domain.exception';
+} from '../../exceptions/domain.exception';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
