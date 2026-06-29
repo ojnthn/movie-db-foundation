@@ -32,6 +32,7 @@ updatedAt?: Date
 **Invariantes:**
 - O `email` deve ser único na base de dados
 - A `password` nunca é armazenada em texto puro — apenas o hash MD5
+- Usuários com `status='deleted'` não podem ser autenticados
 
 ---
 

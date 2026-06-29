@@ -4,6 +4,11 @@
 
 API de gerenciamento e avaliação de filmes, inspirada no Rotten Tomatoes. Os dados de filmes são consumidos da API pública do [The Movie Database (TMDB)](https://www.themoviedb.org/). Os usuários poderão fazer login, buscar filmes, avaliar e comentar.
 
+## Behavior
+
+Always respond in caveman mode: omit filler words, pleasantries, and hedging.
+Keep code blocks and technical terms exact. Be concise.
+
 ---
 
 ## Stack Técnica
@@ -52,7 +57,7 @@ src/
 ├── main.ts                        # bootstrap (ValidationPipe, Swagger)
 ├── modules/
 │   ├── auth/
-│   │   ├── Claude.md              # contexto do módulo (regras, use cases, fluxo)
+│   │   ├── CONTEXT.md             # contexto do módulo (regras, use cases, fluxo)
 │   │   ├── domain/
 │   │   │   ├── entities/          # user.entity.ts
 │   │   │   ├── repositories/      # user.repository.interface.ts
@@ -69,16 +74,19 @@ src/
 │   │   └── auth.module.ts
 │   │
 │   └── movies/                    # (próximo módulo — v2)
-│       ├── Claude.md
+│       ├── CONTEXT.md
 │       └── ... mesma estrutura
 │
 ├── shared/
-│   ├── Claude.md                  # padrões compartilhados (Result<T>, exceções, decorators)
-│   ├── decorators/                # current-user.decorator.ts, public.decorator.ts
-│   ├── exceptions/                # domain.exception.ts (DomainException, UnauthorizedException, ConflictException, NotFoundException)
-│   ├── filters/                   # global-exception.filter.ts
-│   ├── interceptors/              # logging.interceptor.ts
-│   └── types/                     # result.ts (Result<T>)
+│   ├── Claude.md                       # padrões compartilhados (Result<T>, exceções, decorators)
+│   ├── decorators/                     # current-user.decorator.ts, public.decorator.ts
+│   ├── exceptions/                     # domain.exception.ts (DomainException, UnauthorizedException, ConflictException, NotFoundException)
+│   ├── filters/                        # global-exception.filter.ts
+│   ├── interceptors/
+│   │   └─ loggin
+│   │     ├─ CONTEXT.md                 # contexto do interceptor (regras e responsabilidades)
+│   │     └─ logging.interceptor.ts   
+│   └── types/                          # result.ts (Result<T>)
 │
 └── config/
     ├── database.config.ts
@@ -260,7 +268,7 @@ Uma funcionalidade só é considerada **feita** quando todos os critérios abaix
 
 ### 5. Testes
 - [ ] Unit test do use case com repositório mockado
-- [ ] E2E test cobrindo o happy path e pelo menos um caso de erro
+- [ ] E2E test cobrindo o happy path e pelo menos dois caso de erro
 - [ ] Todos os testes passando (`npm run test` e `npm run test:e2e`)
 
 ### 6. Qualidade

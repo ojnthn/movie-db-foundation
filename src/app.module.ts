@@ -4,7 +4,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import { GlobalExceptionFilter } from './shared/filters/global-exception.filter';
-import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
+import { LoggingInterceptor } from './shared/interceptors/logging/logging.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/infrastructure/guards/jwt-auth.guard';
 import { AppController } from './app.controller';

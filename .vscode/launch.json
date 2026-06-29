@@ -18,7 +18,7 @@
         "!**/node_modules/**"
       ],
       "preLaunchTask": "docker: up & wait debug",
-      "postDebugTask": "docker: down"
+      "postDebugTask": "docker: down",
     }
   ]
 }

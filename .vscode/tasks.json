@@ -69,6 +69,17 @@
       "problemMatcher": []
     },
     {
+      "label": "open: swagger",
+      "type": "shell",
+      "command": "open -a Safari http://localhost:3000/docs",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "docker: down",
       "type": "shell",
       "command": "docker compose -f docker/docker-compose.yml down",
