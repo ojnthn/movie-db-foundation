@@ -5,7 +5,8 @@ dockerTarget = "production"
 buildArgs = { CACHE_BUST = "2" }
 
 [deploy]
-startCommand = "npx prisma migrate deploy && node dist/main"
+releaseCommand = "npx prisma migrate deploy"
+startCommand = "node dist/main"
 healthcheckPath = "/docs"
 healthcheckTimeout = 120
 restartPolicyType = "on_failure"
