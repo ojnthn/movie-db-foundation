@@ -7,6 +7,7 @@ import { GlobalExceptionFilter } from './shared/filters/global-exception/global-
 import { LoggingInterceptor } from './shared/interceptors/logging/logging.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
 import { MoviesModule } from './modules/movies/movies.module';
+import { UserConfigModule } from './modules/user-config/user-config.module';
 import { JwtAuthGuard } from './modules/auth/infrastructure/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 
@@ -18,6 +19,7 @@ import { AppController } from './app.controller';
     }),
     AuthModule,
     MoviesModule,
+    UserConfigModule,
   ],
   controllers: [AppController],
   providers: [

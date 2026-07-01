@@ -15,7 +15,11 @@ describe('App (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
@@ -26,7 +30,10 @@ describe('App (e2e)', () => {
   });
 
   it('GET /health should return 200 without token', () => {
-    return request(app.getHttpServer()).get('/health').expect(200).expect({ status: 'ok' });
+    return request(app.getHttpServer())
+      .get('/health')
+      .expect(200)
+      .expect({ status: 'ok' });
   });
 
   it('POST /auth with invalid body should return 400', () => {

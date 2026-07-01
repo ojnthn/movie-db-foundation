@@ -47,6 +47,18 @@ model User {
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
 
+  language                       String   @default("en-US") @map("language")
+  region                         String   @default("US") @map("region")
+  includeAdult                   Boolean  @default(false) @map("include_adult")
+  theme                          String   @default("dark") @map("theme")
+  itemsPerPage                   Int      @default(20) @map("items_per_page")
+  defaultSortBy                  String   @default("popularity.desc") @map("default_sort_by")
+  newReleasesFromFavoriteGenres  Boolean  @default(true) @map("new_releases_from_favorite_genres")
+  watchlistUpcomingReminders     Boolean  @default(true) @map("watchlist_upcoming_reminders")
+
+  favoriteGenres      UserFavoriteGenre[]
+  streamingProviders  UserStreamingProvider[]
+
   @@map("users")
 }
 
@@ -55,7 +67,31 @@ enum UserStatus {
   inactive
   deleted
 }
+
+model UserFavoriteGenre {
+  id      String @id @default(uuid())
+  userId  String @map("user_id")
+  genreId Int    @map("genre_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, genreId])
+  @@map("user_favorite_genres")
+}
+
+model UserStreamingProvider {
+  id         String @id @default(uuid())
+  userId     String @map("user_id")
+  providerId Int    @map("provider_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, providerId])
+  @@map("user_streaming_providers")
+}
 ```
+
+> Campos de preferência (`language`, `region`, `includeAdult`, `theme`, `itemsPerPage`, `defaultSortBy`, `newReleasesFromFavoriteGenres`, `watchlistUpcomingReminders`) e as tabelas `user_favorite_genres` / `user_streaming_providers` pertencem ao módulo `user-config` — ver `src/modules/user-config/CONTEXT.md`.
 
 ## Migrations
 

@@ -13,11 +13,11 @@ Expor filmes populares em cartaz, consumindo dados da API TMDB e resolvendo gên
 ### Dentro do escopo
 
 - Listar filmes populares com paginação, filtrados para lançamentos teatrais dos últimos 6 meses
+- Obter detalhes de um filme específico por ID
 
 ### Fora do escopo
 
 - Busca de filmes por título ou filtros arbitrários
-- Detalhes de um filme específico
 - Favoritos, avaliações ou qualquer dado de usuário
 - Armazenar dados de filmes em banco de dados próprio
 
@@ -28,6 +28,7 @@ Expor filmes populares em cartaz, consumindo dados da API TMDB e resolvendo gên
 | Use Case | Arquivo | Rota |
 |---|---|---|
 | `GetPopularMoviesUseCase` | `application/use-cases/get-popular-movies.use-case.ts` | `GET /movies` |
+| `GetMovieDetailsUseCase` | `application/use-cases/get-movie-details.use-case.ts` | `GET /movies/:id` |
 
 ---
 
@@ -72,6 +73,7 @@ export interface PopularMoviesResult {
 
 export abstract class MoviesRepository {
   abstract getPopular(options: GetPopularMoviesOptions): Promise<PopularMoviesResult>;
+  abstract getById(id: number): Promise<Movie | null>;
 }
 ```
 
@@ -115,6 +117,31 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 **Erros:**
 - `401` — Token ausente ou inválido
 
+### GET /movies/:id
+
+Requer autenticação JWT (`Authorization: Bearer <token>`).
+
+**Path Params:**
+
+| Param | Tipo | Descrição |
+|---|---|---|
+| `id` | `number` | ID do filme na TMDB |
+
+**Response (`200`):**
+```json
+{
+  "id": 123,
+  "backdrop_path": "/path.jpg",
+  "name": "Movie Title",
+  "overview": "Description...",
+  "genres_names": ["Action", "Drama"]
+}
+```
+
+**Erros:**
+- `401` — Token ausente ou inválido
+- `404` — Filme não encontrado na TMDB
+
 ---
 
 ## Erros Esperados
@@ -122,8 +149,9 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 | Exceção | Código HTTP | Quando ocorre |
 |---|---|---|
 | `UnauthorizedException` (global) | `401` | Token JWT ausente ou inválido — tratado pelo `JwtAuthGuard` global |
+| `NotFoundException` | `404` | `GetMovieDetailsUseCase` — TMDB retorna 404 para o ID informado |
 
-> Este módulo não lança exceções de domínio próprias — erros da TMDB propagam como `HttpException` via `RestClient`.
+> Erros inesperados da TMDB (além do 404 tratado) propagam como `ExternalApiException` via `RestClient`.
 
 ---
 
@@ -148,6 +176,22 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 7. Calcula nextPage: page < total_pages ? page + 1 : null
 8. UseCase mapeia PopularMoviesResult → GetPopularMoviesOutput (camelCase → snake_case para response)
 9. Controller retorna HTTP 200
+```
+
+### GetMovieDetailsUseCase
+
+```
+1. Controller recebe path param `id` (string) → converte para number
+2. Chama GetMovieDetailsUseCase.execute({ id })
+3. UseCase chama moviesRepository.getById(id)
+4. TmdbMoviesRepository executa GET /movie/:id
+   params: language=en-US
+   - Se TMDB retorna 404 (ExternalApiException com status 404), repositório retorna null
+   - Gêneros já vêm embutidos na resposta (`genres: [{id, name}]`) — sem chamada adicional
+5. Mapeia TmdbMovieDetails → Movie via new Movie(id, backdrop_path, title, overview, genres.map(name))
+6. Se movie for null, UseCase lança NotFoundException
+7. UseCase mapeia Movie → GetMovieDetailsOutput (camelCase → snake_case para response)
+8. Controller retorna HTTP 200
 ```
 
 ---
@@ -221,6 +265,7 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 | Repositório abstrato | `domain/repositories/movies.repository.interface.ts` | `MoviesRepository` |
 | Token DI (exportado, não usado) | `domain/repositories/movies.repository.interface.ts` | `MOVIES_REPOSITORY` |
 | Use case | `application/use-cases/get-popular-movies.use-case.ts` | `GetPopularMoviesUseCase` |
+| Use case | `application/use-cases/get-movie-details.use-case.ts` | `GetMovieDetailsUseCase` |
 | Repositório TMDB | `infrastructure/repositories/tmdb-movies.repository.ts` | `TmdbMoviesRepository` |
 | Controller | `presentation/controllers/movies.controller.ts` | `MoviesController` |
 
@@ -247,7 +292,6 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 ## Evolução Futura
 
 - Busca de filmes por título (`GET /movies/search?q=`)
-- Detalhes de um filme (`GET /movies/:id`)
 - Cache de gêneros (lista raramente muda — candidata a TTL longo)
 - Suporte a idioma configurável via query param
 

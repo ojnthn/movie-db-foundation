@@ -16,7 +16,11 @@ describe('Auth (e2e)', () => {
 
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     app.useGlobalFilters(new GlobalExceptionFilter());
     await app.init();
@@ -30,7 +34,11 @@ describe('Auth (e2e)', () => {
     it('should register and return a token', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ name: 'Test User', email: `user_${Date.now()}@example.com`, password: VALID_MD5 })
+        .send({
+          name: 'Test User',
+          email: `user_${Date.now()}@example.com`,
+          password: VALID_MD5,
+        })
         .expect(201)
         .expect((res) => {
           expect(res.body).toHaveProperty('token');
@@ -47,7 +55,11 @@ describe('Auth (e2e)', () => {
     it('should return 400 for non-MD5 password', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
-        .send({ name: 'Test', email: 'user@example.com', password: 'plaintext' })
+        .send({
+          name: 'Test',
+          email: 'user@example.com',
+          password: 'plaintext',
+        })
         .expect(400);
     });
   });

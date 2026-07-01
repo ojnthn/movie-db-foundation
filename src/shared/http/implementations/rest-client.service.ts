@@ -22,8 +22,16 @@ export class RestClientService implements RestClient {
     this.globalTimeout = this.configService.get<number>('API_TIMEOUT') ?? 5000;
   }
 
-  async get<TResponse>(endpoint: string, config?: RequestConfig): Promise<TResponse> {
-    return this.request<undefined, TResponse>('GET', endpoint, undefined, config);
+  async get<TResponse>(
+    endpoint: string,
+    config?: RequestConfig,
+  ): Promise<TResponse> {
+    return this.request<undefined, TResponse>(
+      'GET',
+      endpoint,
+      undefined,
+      config,
+    );
   }
 
   async post<TRequest, TResponse>(
@@ -63,16 +71,26 @@ export class RestClientService implements RestClient {
       );
 
       const duration = Date.now() - startTime;
-      this.logger.log(`← ${method} ${endpoint} ${response.status} (${duration}ms)`);
+      this.logger.log(
+        `← ${method} ${endpoint} ${response.status} (${duration}ms)`,
+      );
 
       return response.data;
     } catch (error: unknown) {
       const duration = Date.now() - startTime;
-      const axiosError = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
+      const axiosError = error as {
+        response?: { status?: number; data?: { message?: string } };
+        message?: string;
+      };
       const status = axiosError?.response?.status ?? 500;
-      const message = axiosError?.response?.data?.message ?? axiosError?.message ?? 'External API error';
+      const message =
+        axiosError?.response?.data?.message ??
+        axiosError?.message ??
+        'External API error';
 
-      this.logger.error(`← ${method} ${endpoint} ${status} (${duration}ms): ${message}`);
+      this.logger.error(
+        `← ${method} ${endpoint} ${status} (${duration}ms): ${message}`,
+      );
 
       throw new ExternalApiException(status, endpoint, message);
     }

@@ -6,6 +6,7 @@
 |---|---|---|
 | `auth` | Implementado | Registro e autenticação de usuários com JWT |
 | `movies` | Implementado | Listagem de filmes populares via TMDB API |
+| `user-config` | Implementado | Preferências de exibição e notificação do usuário autenticado |
 
 ## Estrutura Interna
 

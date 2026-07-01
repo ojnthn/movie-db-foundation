@@ -28,17 +28,25 @@ describe('AuthUseCase', () => {
       findByEmail: jest.fn(),
       create: jest.fn(),
     };
-    jwtService = { sign: jest.fn().mockReturnValue('jwt-token') } as unknown as jest.Mocked<JwtService>;
+    jwtService = {
+      sign: jest.fn().mockReturnValue('jwt-token'),
+    } as unknown as jest.Mocked<JwtService>;
     useCase = new AuthUseCase(userRepository, jwtService);
   });
 
   it('should return a token when credentials are valid', async () => {
     userRepository.findByEmail.mockResolvedValue(makeUser());
 
-    const result = await useCase.execute({ email: 'test@example.com', password: VALID_MD5 });
+    const result = await useCase.execute({
+      email: 'test@example.com',
+      password: VALID_MD5,
+    });
 
     expect(result).toEqual({ token: 'jwt-token' });
-    expect(jwtService.sign).toHaveBeenCalledWith({ sub: 'uuid-1', email: 'test@example.com' });
+    expect(jwtService.sign).toHaveBeenCalledWith({
+      sub: 'uuid-1',
+      email: 'test@example.com',
+    });
   });
 
   it('should throw UnauthorizedException when user is not found', async () => {

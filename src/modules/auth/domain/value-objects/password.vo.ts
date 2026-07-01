@@ -7,7 +7,9 @@ export class Password {
 
   static create(raw: string): Result<Password> {
     if (!raw || !MD5_REGEX.test(raw)) {
-      return fail('A senha deve ser um hash MD5 válido (32 caracteres hexadecimais)');
+      return fail(
+        'A senha deve ser um hash MD5 válido (32 caracteres hexadecimais)',
+      );
     }
     return ok(new Password(raw.toLowerCase()));
   }

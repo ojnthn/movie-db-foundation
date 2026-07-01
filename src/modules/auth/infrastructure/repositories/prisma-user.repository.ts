@@ -31,13 +31,15 @@ export class PrismaUserRepository implements IUserRepository {
       name: raw.name,
       email: raw.email,
       password: raw.password,
-      status: raw.status as 'active' | 'inactive' | 'deleted',
+      status: raw.status,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     });
 
     if (!result.ok) {
-      throw new Error(`Inconsistência no banco: ${result.error} (id=${raw.id})`);
+      throw new Error(
+        `Inconsistência no banco: ${result.error} (id=${raw.id})`,
+      );
     }
 
     return result.value;

@@ -13,5 +13,8 @@ export interface PopularMoviesResult {
 }
 
 export abstract class MoviesRepository {
-  abstract getPopular(options: GetPopularMoviesOptions): Promise<PopularMoviesResult>;
+  abstract getPopular(
+    options: GetPopularMoviesOptions,
+  ): Promise<PopularMoviesResult>;
+  abstract getById(id: number): Promise<Movie | null>;
 }

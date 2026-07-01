@@ -27,7 +27,9 @@ describe('RegisterUseCase', () => {
 
   beforeEach(() => {
     userRepository = { findByEmail: jest.fn(), create: jest.fn() };
-    jwtService = { sign: jest.fn().mockReturnValue('jwt-token') } as unknown as jest.Mocked<JwtService>;
+    jwtService = {
+      sign: jest.fn().mockReturnValue('jwt-token'),
+    } as unknown as jest.Mocked<JwtService>;
     useCase = new RegisterUseCase(userRepository, jwtService);
   });
 
@@ -49,7 +51,11 @@ describe('RegisterUseCase', () => {
     userRepository.findByEmail.mockResolvedValue(makeUser());
 
     await expect(
-      useCase.execute({ name: 'New User', email: 'new@example.com', password: VALID_MD5 }),
+      useCase.execute({
+        name: 'New User',
+        email: 'new@example.com',
+        password: VALID_MD5,
+      }),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
@@ -57,7 +63,11 @@ describe('RegisterUseCase', () => {
     userRepository.findByEmail.mockResolvedValue(null);
 
     await expect(
-      useCase.execute({ name: 'New User', email: 'invalid-email', password: VALID_MD5 }),
+      useCase.execute({
+        name: 'New User',
+        email: 'invalid-email',
+        password: VALID_MD5,
+      }),
     ).rejects.toBeInstanceOf(DomainException);
   });
 });
