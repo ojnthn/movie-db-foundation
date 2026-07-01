@@ -76,6 +76,7 @@ modules/movies/
 | Módulo | Finalidade |
 |---|---|
 | `HttpModule` (shared) | Acesso ao `RestClient` para chamadas à TMDB |
+| `CacheModule` (shared) | Acesso ao `Redis` para caches de chamadas à TMDB |
 
 ### Variáveis de Ambiente
 

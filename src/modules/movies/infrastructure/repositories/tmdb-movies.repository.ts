@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ExternalApiException, RestClient } from '../../../../shared/http';
+import { CacheService } from '../../../../shared/cache/cache.interface';
 import { Movie } from '../../domain/entities/movie.entity';
 import {
   GetPopularMoviesOptions,
@@ -38,17 +39,28 @@ interface TmdbMovieDetails {
   genres: TmdbGenre[];
 }
 
+const GENRES_CACHE_KEY = 'tmdb:movies:genres';
+const GENRES_CACHE_TTL_SECONDS = 86400;
+
 @Injectable()
 export class TmdbMoviesRepository implements MoviesRepository {
-  constructor(private readonly restClient: RestClient) {}
+  constructor(
+    private readonly restClient: RestClient,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async getPopular({
     page = 1,
   }: GetPopularMoviesOptions): Promise<PopularMoviesResult> {
     const [genreList, discoverResult] = await Promise.all([
-      this.restClient.get<TmdbGenreListResponse>('/genre/movie/list', {
-        params: { language: 'pt-BR' },
-      }),
+      this.cacheService.getOrSet<TmdbGenreListResponse>(
+        GENRES_CACHE_KEY,
+        GENRES_CACHE_TTL_SECONDS,
+        () =>
+          this.restClient.get<TmdbGenreListResponse>('/genre/movie/list', {
+            params: { language: 'pt-BR' },
+          }),
+      ),
       this.restClient.get<TmdbDiscoverResponse>('/discover/movie', {
         params: {
           include_adult: 'false',

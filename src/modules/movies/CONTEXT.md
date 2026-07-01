@@ -164,8 +164,9 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 2. Chama GetPopularMoviesUseCase.execute({ page })
 3. UseCase chama moviesRepository.getPopular({ page })
 4. TmdbMoviesRepository executa em paralelo (Promise.all):
-   a. GET /genre/movie/list
-      params: language=en-US
+   a. CacheService.getOrSet("tmdb:movies:genres", 86400s):
+      - Cache hit → retorna lista de gêneros do Redis
+      - Cache miss → GET /genre/movie/list (params: language=en-US), grava no Redis, retorna
       → mapa de id → nome de gênero
    b. GET /discover/movie
       params: include_adult=false, include_video=false, language=en-US,
@@ -211,6 +212,7 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 - Controllers delegam 100% ao use case — sem lógica de negócio (SRP)
 - Resolução de gêneros ocorre exclusivamente no repositório (`TmdbMoviesRepository`) — nunca no use case ou controller
 - Chamadas à TMDB sempre em paralelo com `Promise.all` para minimizar latência
+- Lista de gêneros TMDB sempre obtida via `CacheService.getOrSet` — nunca chamar `/genre/movie/list` diretamente sem passar pelo cache
 
 ---
 
@@ -230,7 +232,7 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 |---|---|
 | `domain` | Nenhuma lib externa |
 | `application` | `domain/` |
-| `infrastructure` | `domain/`, `shared/http`, `@nestjs/common` |
+| `infrastructure` | `domain/`, `shared/http`, `shared/cache`, `@nestjs/common` |
 | `presentation` | Use cases via DI, `@nestjs/common`, `@nestjs/swagger` |
 
 ---
@@ -276,6 +278,7 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 | Componente | Relação |
 |---|---|
 | `shared/http` | `TmdbMoviesRepository` usa `RestClient` para chamadas HTTP à TMDB |
+| `shared/cache` | `TmdbMoviesRepository` usa `CacheService` (`@Global`, não precisa import em `movies.module.ts`) para cachear a lista de gêneros no Redis |
 | `AppModule` | `JwtAuthGuard` global protege `GET /movies` — sem `@Public()` necessário |
 
 ---
@@ -286,13 +289,13 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 - **Filtro de data dinâmico:** Data de lançamento calculada em runtime (`monthsAgo(6)` → hoje) — filmes de lançamento teatral (`with_release_type=2|3`) dos últimos 6 meses.
 - **Abstract class como token DI:** `MoviesRepository` é `abstract class` em vez de `interface` para ser usável como token no `provide` do NestJS sem custo de injeção extra.
 - **Resolução de gêneros no repositório:** IDs TMDB não fazem sentido no domínio — resolvidos para nomes dentro do repositório, que é o único lugar ciente da estrutura da API externa.
+- **Cache de gêneros no Redis:** lista de gêneros raramente muda — `TmdbMoviesRepository` usa `CacheService.getOrSet("tmdb:movies:genres", 86400)` para evitar chamada repetida à TMDB. TTL de 24h hardcoded no repositório (sem variável de ambiente própria). `/discover/movie` nunca é cacheado — resultado muda por página e por janela de data (`release_date.gte`/`lte` calculados em runtime).
 
 ---
 
 ## Evolução Futura
 
 - Busca de filmes por título (`GET /movies/search?q=`)
-- Cache de gêneros (lista raramente muda — candidata a TTL longo)
 - Suporte a idioma configurável via query param
 
 ---

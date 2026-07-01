@@ -12,7 +12,7 @@ API de gerenciamento e avaliação de filmes inspirada no Rotten Tomatoes. Dados
 | Autenticação | JWT (`@nestjs/jwt` + `passport-jwt`) |
 | API externa | The Movie Database (TMDB) |
 | Containerização | Docker + Docker Compose |
-| Cache (planejado) | Redis 7 |
+| Cache | Redis 7 |
 
 ## Regras Globais
 
