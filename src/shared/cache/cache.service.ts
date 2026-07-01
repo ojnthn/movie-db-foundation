@@ -9,17 +9,12 @@ export class RedisCacheService implements CacheService, OnModuleDestroy {
   private readonly client: Redis;
 
   constructor(private readonly configService: ConfigService) {
-    const url = this.configService.get<string>('redis.url');
+    const url = this.configService.getOrThrow<string>('redis.url');
 
-    this.client = url
-      ? new Redis(url, { lazyConnect: false, maxRetriesPerRequest: 1 })
-      : new Redis({
-          host: this.configService.getOrThrow<string>('redis.host'),
-          port: this.configService.get<number>('redis.port'),
-          password: this.configService.get<string>('redis.password'),
-          lazyConnect: false,
-          maxRetriesPerRequest: 1,
-        });
+    this.client = new Redis(url, {
+      lazyConnect: false,
+      maxRetriesPerRequest: 1,
+    });
 
     this.client.on('error', (error: Error) => {
       this.logger.warn(`Redis indisponível: ${error.message}`);

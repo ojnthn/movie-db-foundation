@@ -13,6 +13,7 @@ API de gerenciamento e avaliação de filmes inspirada no Rotten Tomatoes. Dados
 | API externa | The Movie Database (TMDB) |
 | Containerização | Docker + Docker Compose |
 | Cache | Redis 7 |
+| IA | Anthropic Claude (`@anthropic-ai/sdk`) |
 
 ## Regras Globais
 
@@ -51,12 +52,13 @@ JWT_SECRET="sua-chave-secreta"
 JWT_EXPIRATION="30m"
 TMDB_API_KEY="sua-chave-tmdb"
 TMDB_BASE_URL="https://api.themoviedb.org/3"
-REDIS_HOST="localhost"
-REDIS_PORT="6379"
-REDIS_PASSWORD=""
+REDIS_URL="redis://localhost:6379"
+ANTHROPIC_API_KEY="sua-chave-anthropic"
+ANTHROPIC_MODEL="claude-sonnet-4-6"
+ANTHROPIC_MAX_TOKENS="1500"
 ```
 
-> Em produção (Railway), o addon Redis expõe `REDIS_URL` (`redis://user:pass@host:port`) em vez de host/port/password separados. `RedisCacheService` usa `REDIS_URL` quando presente; caso contrário monta a conexão a partir de `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD` (padrão local/Docker Compose).
+> `RedisCacheService` usa `REDIS_URL` (`redis://[user:pass@]host:port`) como única fonte de conexão — local, Docker Compose e produção (Railway) seguem o mesmo formato. Em Docker Compose, `REDIS_URL` é sobrescrito no `docker-compose.yml` para `redis://redis:6379` (hostname interno do serviço).
 
 ## Documentação de Referência
 
