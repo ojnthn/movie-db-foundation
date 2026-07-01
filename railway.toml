@@ -2,7 +2,7 @@
 dockerfilePath = "docker/Dockerfile"
 dockerContext = "."
 dockerTarget = "production"
-buildArgs = { CACHE_BUST = "2" }
+buildArgs = { CACHE_BUST = "3" }
 
 [deploy]
 startCommand = "npx prisma migrate deploy && node dist/main"
