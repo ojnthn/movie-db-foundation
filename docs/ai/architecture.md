@@ -114,6 +114,8 @@ src/
 ├── modules/
 │   └── {module-name}/      # ver docs/ai/modules.md
 └── shared/
+    ├── ai/                 # AiService, AiModule (Anthropic Claude)
+    ├── cache/              # CacheService, CacheModule (Redis)
     ├── decorators/         # @Public(), @CurrentUser()
     ├── exceptions/         # DomainException e subclasses
     ├── filters/            # GlobalExceptionFilter
