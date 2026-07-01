@@ -56,6 +56,8 @@ REDIS_PORT="6379"
 REDIS_PASSWORD=""
 ```
 
+> Em produção (Railway), o addon Redis expõe `REDIS_URL` (`redis://user:pass@host:port`) em vez de host/port/password separados. `RedisCacheService` usa `REDIS_URL` quando presente; caso contrário monta a conexão a partir de `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD` (padrão local/Docker Compose).
+
 ## Documentação de Referência
 
 @docs/ai/architecture.md
