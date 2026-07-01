@@ -32,7 +32,8 @@ GET /movies?page=1
     → MoviesRepository.getPopular({ page })
     → TmdbMoviesRepository:
         Promise.all([
-          GET /genre/movie/list          → genreMap (id → nome)
+          /// Caso exista cache ("tmdb:movies:genres") obtem dele, caso não insere
+          GET /genre/movie/list          → genreMap (id → nome) 
           GET /discover/movie            → TmdbMovie[]
         ])
     → Resolve genre_ids → nomes via genreMap

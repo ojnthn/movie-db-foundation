@@ -51,7 +51,9 @@ JWT_SECRET="sua-chave-secreta"
 JWT_EXPIRATION="30m"
 TMDB_API_KEY="sua-chave-tmdb"
 TMDB_BASE_URL="https://api.themoviedb.org/3"
-REDIS_URL="redis://localhost:6379"
+REDIS_HOST="localhost"
+REDIS_PORT="6379"
+REDIS_PASSWORD=""
 ```
 
 ## Documentação de Referência
