@@ -2,9 +2,9 @@
 
 ## Responsabilidade
 
-Expor filmes populares em cartaz, consumindo dados da API TMDB e resolvendo gêneros para nomes legíveis.
+Expor filmes populares, filmes em cartaz e detalhes de filmes, consumindo dados da API TMDB e resolvendo gêneros para nomes legíveis.
 
-> SRP: este módulo tem exatamente uma razão para mudar.
+> SRP: este módulo tem exatamente uma razão para mudar — a forma como filmes da TMDB são expostos via API.
 
 ---
 
@@ -12,7 +12,8 @@ Expor filmes populares em cartaz, consumindo dados da API TMDB e resolvendo gên
 
 ### Dentro do escopo
 
-- Listar filmes populares com paginação, filtrados para lançamentos teatrais dos últimos 6 meses
+- Listar filmes populares com paginação, sem filtro de data ou tipo de lançamento
+- Listar filmes em cartaz com paginação, filtrados para lançamentos teatrais dos últimos 6 meses
 - Obter detalhes de um filme específico por ID
 
 ### Fora do escopo
@@ -27,8 +28,9 @@ Expor filmes populares em cartaz, consumindo dados da API TMDB e resolvendo gên
 
 | Use Case | Arquivo | Rota |
 |---|---|---|
-| `GetPopularMoviesUseCase` | `application/use-cases/get-popular-movies.use-case.ts` | `GET /movies` |
-| `GetMovieDetailsUseCase` | `application/use-cases/get-movie-details.use-case.ts` | `GET /movies/:id` |
+| `GetPopularMoviesUseCase` | `application/use-cases/get-popular-movies.use-case.ts` | `GET /movies/popular` |
+| `GetNowPlayingMoviesUseCase` | `application/use-cases/get-now-playing-movies.use-case.ts` | `GET /movies/now-playing` |
+| `GetMovieDetailsUseCase` | `application/use-cases/get-movie-details.use-case.ts` | `GET /movie/:id` |
 
 ---
 
@@ -73,17 +75,20 @@ export interface PopularMoviesResult {
 
 export abstract class MoviesRepository {
   abstract getPopular(options: GetPopularMoviesOptions): Promise<PopularMoviesResult>;
+  abstract getNowPlaying(options: GetPopularMoviesOptions): Promise<PopularMoviesResult>;
   abstract getById(id: number): Promise<Movie | null>;
 }
 ```
 
 > `MoviesRepository` é uma `abstract class` (não `interface`) para permitir uso como token DI no NestJS sem precisar de string token separado. O `movies.module.ts` usa a classe diretamente como token (`provide: MoviesRepository`) — `MOVIES_REPOSITORY` está exportado mas não é utilizado no registro atual.
+>
+> `GetPopularMoviesOptions` e `PopularMoviesResult` são reutilizados por `getPopular` e `getNowPlaying` — mesma forma de entrada/saída (paginação + lista de `Movie`), apenas os filtros TMDB aplicados internamente mudam entre os dois métodos.
 
 ---
 
 ## Contrato da API
 
-### GET /movies
+### GET /movies/popular
 
 Requer autenticação JWT (`Authorization: Bearer <token>`).
 
@@ -117,7 +122,22 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 **Erros:**
 - `401` — Token ausente ou inválido
 
-### GET /movies/:id
+### GET /movies/now-playing
+
+Requer autenticação JWT (`Authorization: Bearer <token>`).
+
+**Query Params:**
+
+| Param | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `page` | `number` | `1` | Número da página |
+
+**Response (`200`):** idêntico a `GET /movies/popular` — mesma forma de `pagination`/`details`, filmes diferentes por conta dos filtros aplicados (ver [Decisões Técnicas](#decisões-técnicas)).
+
+**Erros:**
+- `401` — Token ausente ou inválido
+
+### GET /movie/:id
 
 Requer autenticação JWT (`Authorization: Bearer <token>`).
 
@@ -164,18 +184,37 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 2. Chama GetPopularMoviesUseCase.execute({ page })
 3. UseCase chama moviesRepository.getPopular({ page })
 4. TmdbMoviesRepository executa em paralelo (Promise.all):
-   a. CacheService.getOrSet("tmdb:movies:genres", 86400s):
+   a. getGenreMap() via CacheService.getOrSet("tmdb:movies:genres", 86400s):
       - Cache hit → retorna lista de gêneros do Redis
-      - Cache miss → GET /genre/movie/list (params: language=en-US), grava no Redis, retorna
+      - Cache miss → GET /genre/movie/list (params: language=pt-BR), grava no Redis, retorna
       → mapa de id → nome de gênero
-   b. GET /discover/movie
-      params: include_adult=false, include_video=false, language=en-US,
+   b. discoverMovies() → GET /discover/movie
+      params: include_adult=false, include_video=false, language=pt-BR,
+              page, sort_by=popularity.desc
+      (sem with_release_type nem release_date — ranking geral de popularidade)
+5. Resolve genre_ids de cada filme para nomes via genreMap (IDs sem mapeamento filtrados)
+6. Mapeia TmdbMovie[] → Movie[] via new Movie(id, backdrop_path, title, overview, genresNames)
+7. Calcula nextPage: page < total_pages ? page + 1 : null
+8. UseCase mapeia PopularMoviesResult → GetPopularMoviesOutput (camelCase → snake_case para response)
+9. Controller retorna HTTP 200
+```
+
+### GetNowPlayingMoviesUseCase
+
+```
+1. Controller recebe query param `page` (string | undefined) → converte para number, padrão 1
+2. Chama GetNowPlayingMoviesUseCase.execute({ page })
+3. UseCase chama moviesRepository.getNowPlaying({ page })
+4. TmdbMoviesRepository executa em paralelo (Promise.all):
+   a. getGenreMap() — mesmo cache compartilhado com GetPopularMoviesUseCase ("tmdb:movies:genres")
+   b. discoverMovies() → GET /discover/movie
+      params: include_adult=false, include_video=false, language=pt-BR,
               page, sort_by=popularity.desc, with_release_type=2|3,
               release_date.gte=<6 meses atrás>, release_date.lte=<hoje>
 5. Resolve genre_ids de cada filme para nomes via genreMap (IDs sem mapeamento filtrados)
 6. Mapeia TmdbMovie[] → Movie[] via new Movie(id, backdrop_path, title, overview, genresNames)
 7. Calcula nextPage: page < total_pages ? page + 1 : null
-8. UseCase mapeia PopularMoviesResult → GetPopularMoviesOutput (camelCase → snake_case para response)
+8. UseCase mapeia PopularMoviesResult → GetNowPlayingMoviesOutput (camelCase → snake_case para response)
 9. Controller retorna HTTP 200
 ```
 
@@ -186,7 +225,7 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 2. Chama GetMovieDetailsUseCase.execute({ id })
 3. UseCase chama moviesRepository.getById(id)
 4. TmdbMoviesRepository executa GET /movie/:id
-   params: language=en-US
+   params: language=pt-BR
    - Se TMDB retorna 404 (ExternalApiException com status 404), repositório retorna null
    - Gêneros já vêm embutidos na resposta (`genres: [{id, name}]`) — sem chamada adicional
 5. Mapeia TmdbMovieDetails → Movie via new Movie(id, backdrop_path, title, overview, genres.map(name))
@@ -210,9 +249,11 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 - Regra de dependência: `presentation → application → domain ← infrastructure`
 - Um use case por operação — nunca múltiplas ações em um único use case (SRP)
 - Controllers delegam 100% ao use case — sem lógica de negócio (SRP)
+- Rotas estáticas (`/popular`, `/now-playing`) declaradas antes da rota dinâmica (`/:id`) no controller — evita que `/:id` capture as rotas estáticas
 - Resolução de gêneros ocorre exclusivamente no repositório (`TmdbMoviesRepository`) — nunca no use case ou controller
 - Chamadas à TMDB sempre em paralelo com `Promise.all` para minimizar latência
-- Lista de gêneros TMDB sempre obtida via `CacheService.getOrSet` — nunca chamar `/genre/movie/list` diretamente sem passar pelo cache
+- Lista de gêneros TMDB sempre obtida via `CacheService.getOrSet` (helper privado `getGenreMap()`) — nunca chamar `/genre/movie/list` diretamente sem passar pelo cache
+- Filtros de "em cartaz" (`with_release_type`, `release_date.gte/lte`) aplicados exclusivamente em `getNowPlaying` — `getPopular` nunca aplica esses filtros
 
 ---
 
@@ -223,6 +264,7 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 - Retornar `genre_ids` numéricos no response — sempre resolver para nomes
 - Fazer chamadas sequenciais à TMDB quando podem ser paralelas
 - Adicionar lógica de negócio no controller
+- Misturar os filtros de `getPopular` e `getNowPlaying` no mesmo método do repositório
 
 ---
 
@@ -267,6 +309,7 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 | Repositório abstrato | `domain/repositories/movies.repository.interface.ts` | `MoviesRepository` |
 | Token DI (exportado, não usado) | `domain/repositories/movies.repository.interface.ts` | `MOVIES_REPOSITORY` |
 | Use case | `application/use-cases/get-popular-movies.use-case.ts` | `GetPopularMoviesUseCase` |
+| Use case | `application/use-cases/get-now-playing-movies.use-case.ts` | `GetNowPlayingMoviesUseCase` |
 | Use case | `application/use-cases/get-movie-details.use-case.ts` | `GetMovieDetailsUseCase` |
 | Repositório TMDB | `infrastructure/repositories/tmdb-movies.repository.ts` | `TmdbMoviesRepository` |
 | Controller | `presentation/controllers/movies.controller.ts` | `MoviesController` |
@@ -279,17 +322,18 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 |---|---|
 | `shared/http` | `TmdbMoviesRepository` usa `RestClient` para chamadas HTTP à TMDB |
 | `shared/cache` | `TmdbMoviesRepository` usa `CacheService` (`@Global`, não precisa import em `movies.module.ts`) para cachear a lista de gêneros no Redis |
-| `AppModule` | `JwtAuthGuard` global protege `GET /movies` — sem `@Public()` necessário |
+| `AppModule` | `JwtAuthGuard` global protege todas as rotas de `MoviesController` — sem `@Public()` necessário |
 
 ---
 
 ## Decisões Técnicas
 
-- **Chamadas paralelas:** `TmdbMoviesRepository.getPopular` faz `Promise.all` com `/genre/movie/list` e `/discover/movie` para minimizar latência — as duas respostas são independentes.
-- **Filtro de data dinâmico:** Data de lançamento calculada em runtime (`monthsAgo(6)` → hoje) — filmes de lançamento teatral (`with_release_type=2|3`) dos últimos 6 meses.
+- **Chamadas paralelas:** `TmdbMoviesRepository.getPopular` e `getNowPlaying` fazem `Promise.all` com `/genre/movie/list` e `/discover/movie` para minimizar latência — as duas respostas são independentes.
+- **`getPopular` vs `getNowPlaying`:** ambos chamam `/discover/movie` via helper privado `discoverMovies(params)`, mas com parâmetros diferentes — `getPopular` aplica apenas `sort_by=popularity.desc`; `getNowPlaying` adiciona `with_release_type=2|3` e a janela `release_date.gte/lte` calculada em runtime (`monthsAgo(6)` → hoje). O mapeamento de resposta (`toPaginatedResult`) é compartilhado entre os dois métodos.
 - **Abstract class como token DI:** `MoviesRepository` é `abstract class` em vez de `interface` para ser usável como token no `provide` do NestJS sem custo de injeção extra.
 - **Resolução de gêneros no repositório:** IDs TMDB não fazem sentido no domínio — resolvidos para nomes dentro do repositório, que é o único lugar ciente da estrutura da API externa.
-- **Cache de gêneros no Redis:** lista de gêneros raramente muda — `TmdbMoviesRepository` usa `CacheService.getOrSet("tmdb:movies:genres", 86400)` para evitar chamada repetida à TMDB. TTL de 24h hardcoded no repositório (sem variável de ambiente própria). `/discover/movie` nunca é cacheado — resultado muda por página e por janela de data (`release_date.gte`/`lte` calculados em runtime).
+- **Cache de gêneros no Redis:** lista de gêneros raramente muda — `getGenreMap()` usa `CacheService.getOrSet("tmdb:movies:genres", 86400)` para evitar chamada repetida à TMDB. TTL de 24h hardcoded no repositório (sem variável de ambiente própria), compartilhado entre `getPopular` e `getNowPlaying`. `/discover/movie` nunca é cacheado — resultado muda por página e, no caso de `getNowPlaying`, pela janela de data (`release_date.gte`/`lte` calculados em runtime).
+- **Idioma fixo em pt-BR:** todas as chamadas à TMDB (`/genre/movie/list`, `/discover/movie`, `/movie/:id`) usam `language=pt-BR` hardcoded — sem suporte a idioma configurável nesta versão.
 
 ---
 
@@ -307,3 +351,4 @@ Requer autenticação JWT (`Authorization: Bearer <token>`).
 - Não faça chamadas TMDB sequenciais quando podem ser paralelas
 - Não coloque lógica de mapeamento de resposta fora do repositório ou do use case
 - Não armazene dados de filmes em banco — este módulo é puramente proxy da TMDB
+- Não misture os filtros de "populares" e "em cartaz" no mesmo método do repositório

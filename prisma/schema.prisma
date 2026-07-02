@@ -28,6 +28,7 @@ model User {
 
   favoriteGenres      UserFavoriteGenre[]
   streamingProviders  UserStreamingProvider[]
+  movieReviews        MovieReview[]
 
   @@map("users")
 }
@@ -58,4 +59,18 @@ model UserStreamingProvider {
 
   @@unique([userId, providerId])
   @@map("user_streaming_providers")
+}
+
+model MovieReview {
+  id      String   @id @default(uuid())
+  userId  String   @map("user_id")
+  movieId Int      @map("movie_id")
+  rate    Decimal  @db.Decimal(2, 1) @map("rate")
+  loved   Boolean  @map("loved")
+  review  String?  @db.Text @map("review")
+  logDate DateTime @map("log_date")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_movie_review")
 }

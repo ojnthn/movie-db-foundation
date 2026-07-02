@@ -52,52 +52,38 @@ export class TmdbMoviesRepository implements MoviesRepository {
   async getPopular({
     page = 1,
   }: GetPopularMoviesOptions): Promise<PopularMoviesResult> {
-    const [genreList, discoverResult] = await Promise.all([
-      this.cacheService.getOrSet<TmdbGenreListResponse>(
-        GENRES_CACHE_KEY,
-        GENRES_CACHE_TTL_SECONDS,
-        () =>
-          this.restClient.get<TmdbGenreListResponse>('/genre/movie/list', {
-            params: { language: 'pt-BR' },
-          }),
-      ),
-      this.restClient.get<TmdbDiscoverResponse>('/discover/movie', {
-        params: {
-          include_adult: 'false',
-          include_video: 'false',
-          language: 'pt-BR',
-          page,
-          sort_by: 'popularity.desc',
-          with_release_type: '2|3',
-          'release_date.gte': this.formatDate(this.monthsAgo(6)),
-          'release_date.lte': this.formatDate(new Date()),
-        },
+    const [genreMap, discoverResult] = await Promise.all([
+      this.getGenreMap(),
+      this.discoverMovies({
+        include_adult: 'false',
+        include_video: 'false',
+        language: 'pt-BR',
+        page,
+        sort_by: 'popularity.desc',
       }),
     ]);
 
-    const genreMap = new Map<number, string>(
-      genreList.genres.map((g) => [g.id, g.name]),
-    );
+    return this.toPaginatedResult(discoverResult, genreMap);
+  }
 
-    const movies = discoverResult.results.map(
-      (m) =>
-        new Movie(
-          m.id,
-          m.backdrop_path,
-          m.title,
-          m.overview,
-          m.genre_ids.map((id) => genreMap.get(id) ?? '').filter(Boolean),
-        ),
-    );
+  async getNowPlaying({
+    page = 1,
+  }: GetPopularMoviesOptions): Promise<PopularMoviesResult> {
+    const [genreMap, discoverResult] = await Promise.all([
+      this.getGenreMap(),
+      this.discoverMovies({
+        include_adult: 'false',
+        include_video: 'false',
+        language: 'pt-BR',
+        page,
+        sort_by: 'popularity.desc',
+        with_release_type: '2|3',
+        'release_date.gte': this.formatDate(this.monthsAgo(6)),
+        'release_date.lte': this.formatDate(new Date()),
+      }),
+    ]);
 
-    return {
-      currentPage: discoverResult.page,
-      nextPage:
-        discoverResult.page < discoverResult.total_pages
-          ? discoverResult.page + 1
-          : null,
-      movies,
-    };
+    return this.toPaginatedResult(discoverResult, genreMap);
   }
 
   async getById(id: number): Promise<Movie | null> {
@@ -122,6 +108,52 @@ export class TmdbMoviesRepository implements MoviesRepository {
       }
       throw error;
     }
+  }
+
+  private async getGenreMap(): Promise<Map<number, string>> {
+    const genreList = await this.cacheService.getOrSet<TmdbGenreListResponse>(
+      GENRES_CACHE_KEY,
+      GENRES_CACHE_TTL_SECONDS,
+      () =>
+        this.restClient.get<TmdbGenreListResponse>('/genre/movie/list', {
+          params: { language: 'pt-BR' },
+        }),
+    );
+
+    return new Map<number, string>(genreList.genres.map((g) => [g.id, g.name]));
+  }
+
+  private discoverMovies(
+    params: Record<string, string | number>,
+  ): Promise<TmdbDiscoverResponse> {
+    return this.restClient.get<TmdbDiscoverResponse>('/discover/movie', {
+      params,
+    });
+  }
+
+  private toPaginatedResult(
+    discoverResult: TmdbDiscoverResponse,
+    genreMap: Map<number, string>,
+  ): PopularMoviesResult {
+    const movies = discoverResult.results.map(
+      (m) =>
+        new Movie(
+          m.id,
+          m.backdrop_path,
+          m.title,
+          m.overview,
+          m.genre_ids.map((id) => genreMap.get(id) ?? '').filter(Boolean),
+        ),
+    );
+
+    return {
+      currentPage: discoverResult.page,
+      nextPage:
+        discoverResult.page < discoverResult.total_pages
+          ? discoverResult.page + 1
+          : null,
+      movies,
+    };
   }
 
   private monthsAgo(months: number): Date {
