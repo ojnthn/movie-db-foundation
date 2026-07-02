@@ -16,5 +16,8 @@ export abstract class MoviesRepository {
   abstract getPopular(
     options: GetPopularMoviesOptions,
   ): Promise<PopularMoviesResult>;
+  abstract getNowPlaying(
+    options: GetPopularMoviesOptions,
+  ): Promise<PopularMoviesResult>;
   abstract getById(id: number): Promise<Movie | null>;
 }

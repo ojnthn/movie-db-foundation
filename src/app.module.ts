@@ -11,6 +11,7 @@ import { CacheModule } from './shared/cache/cache.module';
 import { AiModule } from './shared/ai/ai.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { MoviesModule } from './modules/movies/movies.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 import { UserConfigModule } from './modules/user-config/user-config.module';
 import { JwtAuthGuard } from './modules/auth/infrastructure/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
@@ -25,6 +26,7 @@ import { AppController } from './app.controller';
     AiModule,
     AuthModule,
     MoviesModule,
+    ReviewsModule,
     UserConfigModule,
   ],
   controllers: [AppController],
